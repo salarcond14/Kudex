@@ -3,256 +3,889 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kudex - MVP Móvil y Funciones Avanzadas</title>
+  <title>Kudex - Workspace Profesional Completo</title>
   <style>
-    /* VARIABLES Y RESETEO */
-    :root { --fondo: #f8f9fa; --borde: #e0e0e0; --acento: #2b2d42; --texto: #333; }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    body { display: flex; height: 100vh; background: var(--fondo); color: var(--texto); overflow: hidden; }
+    :root {
+      --bg-principal: #1e222a;
+      --bg-card: #282c34;
+      --bg-sidebar: #181a1f;
+      --bg-hover: #2c313a;
+      --texto-principal: #abb2bf;
+      --texto-destacado: #ffffff;
+      --texto-mutado: #636d83;
+      --acento-coral: #ff7a7a;
+      --acento-amarillo: #e5c07b;
+      --acento-azul: #61afef;
+      --acento-verde: #98c379;
+      --borde: #3e4451;
+      --fuente: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-    /* OVERLAY Y MENÚ HAMBURGUESA MÓVIL */
-    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 99; }
-    .btn-toggle-menu { display: none; background: var(--acento); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 1rem; align-items: center; gap: 8px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--fuente); }
+    body { background: var(--bg-principal); color: var(--texto-principal); height: 100vh; display: flex; overflow: hidden; }
 
-    /* BARRA LATERAL (NAVEGACIÓN) */
-    aside { width: 240px; background: #fff; border-right: 1px solid var(--borde); padding: 20px; display: flex; flex-direction: column; gap: 20px; transition: left 0.3s ease; z-index: 100; }
-    aside h2 { font-size: 1.5rem; color: var(--acento); letter-spacing: -0.5px; }
-    .menu-btn { width: 100%; text-align: left; padding: 12px 14px; background: none; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 500; color: #555; transition: 0.2s; margin-bottom: 5px; }
-    .menu-btn:hover, .menu-btn.active { background: #eef2f5; color: #000; font-weight: 600; }
+    /* OVERLAY Y MODALES */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 12, 16, 0.85); backdrop-filter: blur(8px);
+      display: flex; justify-content: center; align-items: center; z-index: 1000;
+    }
 
-    /* CONTENEDOR PRINCIPAL */
-    main { flex: 1; padding: 25px; overflow-y: auto; width: 100%; }
-    .vista { display: none; animation: fadeIn 0.2s ease; }
-    .vista.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .notebook-card {
+      background: var(--bg-card); width: 90%; max-width: 500px;
+      border-radius: 16px; border: 1px solid var(--borde);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5); padding: 30px;
+      animation: slideUp 0.3s ease;
+    }
 
-    /* ELEMENTOS COMUNES */
-    .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .btn-principal { background: var(--acento); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-    .btn-principal:hover { background: #1d1e2c; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-    /* AGENDA Y CALENDARIO CONECTADO */
-    .agenda-card { background: #fff; border: 1px solid var(--borde); padding: 20px; border-radius: 12px; max-width: 600px; }
-    input[type="date"] { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    .agenda-card input[type="date"] { width: 100%; margin-top: 10px; margin-bottom: 15px; }
-    .contenedor-tareas-fecha { margin-top: 15px; border-top: 1px solid var(--borde); padding-top: 15px; }
+    .notebook-card h2 { color: var(--texto-destacado); font-size: 1.5rem; margin-bottom: 8px; }
+    .notebook-card p { font-size: 0.9rem; color: var(--texto-mutado); margin-bottom: 20px; }
+    .subetiqueta { color: var(--acento-amarillo); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
 
-    /* PENDIENTES CON FECHAS */
-    .contenedor-input-tarea { display: flex; gap: 10px; max-width: 700px; flex-wrap: wrap; }
-    .input-tarea { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; outline: none; }
-    .lista-pendientes { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 20px; max-width: 700px; }
-    .item-pendiente { background: #fff; padding: 12px 15px; border: 1px solid var(--borde); border-radius: 8px; display: flex; align-items: center; gap: 12px; }
-    .item-pendiente.completada span { text-decoration: line-through; color: #888; }
-    .fecha-etiqueta { font-size: 0.8rem; background: #eef2f5; padding: 4px 8px; border-radius: 4px; color: #555; white-space: nowrap; margin-left: auto; }
-    .btn-eliminar { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .input-onboarding {
+      width: 100%; padding: 12px 14px; background: var(--bg-sidebar); border: 1px solid var(--borde);
+      border-radius: 8px; color: #fff; font-size: 1rem; outline: none; margin-bottom: 15px;
+    }
 
-    /* TABLERO DE CORCHO */
+    .btn-principal {
+      background: var(--acento-coral); color: #1e222a; font-weight: 700; border: none;
+      padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: 0.2s;
+      display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+    }
+    .btn-principal:hover { filter: brightness(1.1); }
+
+    /* NAVEGACIÓN LATERAL */
+    aside { width: 230px; background: var(--bg-sidebar); border-right: 1px solid var(--borde); padding: 20px; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
+    aside h1 { font-size: 1.3rem; color: var(--acento-coral); letter-spacing: -0.5px; margin-bottom: 5px; }
+    .btn-cuenta { background: var(--bg-card); border: 1px solid var(--borde); color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 8px; }
+    .nav-btn { background: none; border: none; color: var(--texto-principal); padding: 10px 12px; text-align: left; width: 100%; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: var(--bg-card); color: var(--texto-destacado); }
+    .btn-reconfig { margin-top: auto; color: #e06c75; font-size: 0.8rem; opacity: 0.8; }
+
+    /* CONTENEDOR DE VISTAS */
+    main { flex: 1; display: flex; overflow: hidden; background: var(--bg-principal); }
+    .vista-contenedor { display: none; width: 100%; height: 100%; overflow-y: auto; padding: 25px; flex-direction: column; gap: 20px; }
+    .vista-contenedor.active { display: flex; }
+
+    /* 1. DASHBOARD DAILY */
+    .grid-dashboard { display: grid; grid-template-columns: 320px 1fr; width: 100%; height: 100%; gap: 20px; }
+    .columna-timeline { background: var(--bg-principal); border-right: 1px solid var(--borde); padding-right: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
+    .reloj-card { background: var(--bg-card); border: 1px solid var(--borde); border-radius: 12px; padding: 18px; text-align: center; }
+    .reloj-tiempo { font-size: 2.5rem; font-weight: 700; color: var(--texto-destacado); font-family: monospace; }
+    .reloj-estado { font-size: 0.75rem; color: var(--acento-verde); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+
+    .clima-widget { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); border: 1px solid var(--borde); padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; }
+    .timeline-contenedor { display: flex; flex-direction: column; gap: 10px; }
+    .hora-bloque { display: flex; gap: 12px; align-items: flex-start; }
+    .hora-label { font-size: 0.75rem; color: var(--texto-mutado); width: 40px; font-weight: 600; text-align: right; }
+    .hora-linea { flex: 1; min-height: 38px; border-top: 1px dashed var(--borde); padding-top: 4px; }
+    .evento-item { background: rgba(97, 175, 239, 0.15); border-left: 3px solid var(--acento-azul); padding: 5px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--texto-destacado); }
+
+    .columna-workspace { overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
+    .card-workspace { background: var(--bg-card); border: 1px solid var(--borde); border-radius: 12px; padding: 18px; }
+    .card-workspace h3 { color: var(--acento-amarillo); font-size: 0.9rem; margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .area-nota-rapida { width: 100%; height: 75px; background: var(--bg-sidebar); border: 1px solid var(--borde); border-radius: 8px; padding: 10px; color: #fff; font-size: 0.85rem; resize: none; outline: none; }
+    .lista-habitos { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .item-habito { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+    .item-habito input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--acento-coral); cursor: pointer; }
+
+    /* 2. TABLERO DE CORCHO */
     .fondo-corcho {
-      background-color: #d4a373;
-      background-image: radial-gradient(#c69460 15%, transparent 16%), radial-gradient(#c69460 15%, transparent 16%);
-      background-size: 20px 20px;
-      padding: 20px;
-      border-radius: 12px;
-      min-height: 65vh;
+      background-color: #8d5524;
+      background-image: radial-gradient(#6b3e15 15%, transparent 16%), radial-gradient(#a36731 15%, transparent 16%);
+      background-size: 30px 30px; background-position: 0 0, 15px 15px;
+      border: 3px solid #522f12; padding: 25px; border-radius: 12px; min-height: 480px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
     }
     .grid-postits { display: flex; flex-wrap: wrap; gap: 20px; }
-    .post-it { width: 160px; height: 160px; padding: 15px; box-shadow: 3px 4px 10px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; display: flex; flex-direction: column; }
-    .post-it:hover { transform: scale(1.05) !important; z-index: 10; }
-    .post-it h3 { font-size: 0.95rem; color: #333; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .post-it p { font-size: 0.8rem; color: #555; flex: 1; overflow: hidden; }
-    .color-1 { background: #fdfd96; transform: rotate(-2deg); }
-    .color-2 { background: #a2cffe; transform: rotate(1deg); }
-    .color-3 { background: #cbaacb; transform: rotate(-1deg); }
-    .color-4 { background: #ffb3ba; transform: rotate(2deg); }
+    .post-it {
+      width: 180px; height: 180px; padding: 15px; border-radius: 4px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.4); cursor: pointer; color: #1e222a;
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden;
+    }
+    .post-it:hover { transform: translateY(-4px) rotate(-1deg); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+    .color-1 { background: #ff8a80; } .color-2 { background: #80d8ff; }
+    .color-3 { background: #ffd180; } .color-4 { background: #ccff90; }
 
-    /* EDITOR DE NOTAS Y HERRAMIENTAS DE TRAZO */
-    .editor-contenedor { display: flex; flex-direction: column; gap: 15px; max-width: 800px; }
-    .editor-texto { background: #fff; border: 1px solid var(--borde); padding: 15px; border-radius: 12px; min-height: 120px; outline: none; line-height: 1.5; }
-    .editor-texto:empty:before { content: attr(data-placeholder); color: #aaa; }
+    .post-it h4 { font-size: 1rem; font-weight: 700; margin-bottom: 5px; word-break: break-word; }
+    .post-it p { font-size: 0.8rem; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+
+    /* MODAL POST-IT */
+    .editor-postit-modal {
+      width: 90%; max-width: 650px; background: var(--bg-card); border-radius: 16px;
+      border: 1px solid var(--borde); padding: 20px; display: flex; flex-direction: column; gap: 12px;
+      position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    }
+    .canvas-postit-container {
+      position: relative; width: 100%; height: 300px; border-radius: 10px; overflow: hidden;
+      background: #fff; border: 1px solid var(--borde);
+    }
+    .text-overlay-postit {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent;
+      border: none; outline: none; padding: 15px; font-size: 1rem; color: #222; resize: none; z-index: 2;
+    }
+    .canvas-overlay-postit {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3;
+      touch-action: none;
+    }
+    .canvas-overlay-postit.disabled-drawing { pointer-events: none; }
+
+    .bar-postit-tools { display: flex; justify-content: space-between; align-items: center; background: var(--bg-sidebar); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--borde); }
+    .btn-modo-toggle { background: var(--bg-card); border: 1px solid var(--borde); color: var(--texto-principal); padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .btn-modo-toggle.active { background: var(--acento-coral); color: #1e222a; font-weight: 700; border-color: var(--acento-coral); }
+
+    /* 3. CUADERNO TIPO ONENOTE CON MARCADOR DE BORDES ROJOS/CORAL */
+    .cuaderno-layout { display: flex; width: 100%; height: 100%; border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
+    .columna-materias { width: 180px; background: var(--bg-sidebar); border-right: 1px solid var(--borde); padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .columna-paginas { width: 180px; background: #16181d; border-right: 1px solid var(--borde); padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .item-materia, .item-pagina { padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; color: var(--texto-principal); }
+    .item-materia.active, .item-pagina.active { background: var(--bg-card); color: #fff; font-weight: 600; border-left: 3px solid var(--acento-coral); }
+
+    .area-hoja-cuaderno { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
-    .lienzo-wrapper { background: #fff; padding: 15px; border: 1px solid var(--borde); border-radius: 12px; }
-    .lienzo-barra-herramientas { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .toolbar-onenote-pro { display: flex; flex-direction: column; background: var(--bg-card); border-bottom: 1px solid var(--borde); }
+    .toolbar-row { display: flex; align-items: center; gap: 12px; padding: 8px 15px; border-bottom: 1px solid var(--bg-sidebar); flex-wrap: wrap; }
+    .tool-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--borde); padding-right: 10px; }
     
-    /* PALETA DE COLORES Y GROSOR */
-    .grupo-controles { display: flex; gap: 8px; align-items: center; }
-    .btn-color { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #ccc; cursor: pointer; }
-    .btn-color.active { box-shadow: 0 0 0 2px var(--acento); transform: scale(1.1); }
-    .btn-grosor { background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-    .btn-grosor.active { background: var(--acento); color: #fff; border-color: var(--acento); }
+    /* ESTILO DE HERRAMIENTA ACTIVA CON BORDE ROJO/CORAL */
+    .btn-tool-pro { background: var(--bg-sidebar); border: 1px solid var(--borde); color: #fff; padding: 5px 10px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.15s; }
+    .btn-tool-pro:hover { background: var(--bg-hover); }
+    .btn-tool-pro.tool-active { border: 1px solid var(--acento-coral) !important; background: rgba(255, 122, 122, 0.15) !important; color: #fff !important; font-weight: 700; }
 
-    canvas { background: #fafafa; border: 2px dashed #ccc; border-radius: 8px; cursor: crosshair; touch-action: none; width: 100%; height: 280px; }
+    .contenedor-scroll-cuaderno {
+      flex: 1; overflow-y: auto; overflow-x: hidden; background: #121418;
+      display: flex; justify-content: center; padding: 20px 0;
+    }
+    .hoja-cuaderno {
+      width: 100%; max-width: 850px; min-height: 1200px; background-color: #181a1f;
+      border: 1px solid var(--borde); border-radius: 8px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
 
-    /* REGLAS MÓVILES (MEDIA QUERIES) */
-    @media (max-width: 768px) {
+    .text-editor-cuaderno {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent;
+      border: none; outline: none; padding: 25px; font-size: 1rem; color: var(--texto-destacado);
+      resize: none; z-index: 2; line-height: 28px;
+    }
+    canvas.canvas-cuaderno { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; touch-action: none; }
+    canvas.canvas-cuaderno.disabled-drawing { pointer-events: none; }
+
+    .bg-grid {
+      background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .bg-lines {
+      background-image: linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 100% 28px;
+    }
+    .bg-blank { background-image: none; }
+
+    /* 4. GESTOR DE PENDIENTES */
+    .contenedor-input-tarea { display: flex; gap: 10px; max-width: 800px; flex-wrap: wrap; }
+    .input-tarea { flex: 1; min-width: 200px; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--borde); border-radius: 8px; color: #fff; outline: none; }
+    .select-prioridad { padding: 10px; background: var(--bg-card); border: 1px solid var(--borde); border-radius: 8px; color: #fff; outline: none; }
+    .input-fecha { padding: 10px; background: var(--bg-card); border: 1px solid var(--borde); border-radius: 8px; color: #fff; outline: none; }
+    .lista-pendientes { list-style: none; display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin-top: 15px; }
+    .item-pendiente { background: var(--bg-card); padding: 12px 15px; border: 1px solid var(--borde); border-radius: 8px; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
+    .item-pendiente.completada span { text-decoration: line-through; color: var(--texto-mutado); }
+    .tag-prioridad { font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+    .prio-alta { background: rgba(224, 108, 117, 0.2); color: #e06c75; border: 1px solid #e06c75; }
+    .prio-media { background: rgba(229, 192, 123, 0.2); color: #e5c07b; border: 1px solid #e5c07b; }
+    .prio-baja { background: rgba(97, 175, 239, 0.2); color: #61afef; border: 1px solid #61afef; }
+
+    .grid-semana { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width: 100%; }
+    .dia-card { background: var(--bg-card); border: 1px solid var(--borde); border-radius: 10px; padding: 15px; min-height: 250px; display: flex; flex-direction: column; gap: 10px; }
+    .dia-card h4 { font-size: 0.9rem; color: var(--acento-coral); border-bottom: 1px solid var(--borde); padding-bottom: 6px; }
+
+    @media (max-width: 900px) {
       body { flex-direction: column; }
-      .btn-toggle-menu { display: inline-flex; }
-      aside { position: fixed; top: 0; left: -260px; height: 100vh; box-shadow: 4px 0 15px rgba(0,0,0,0.2); }
-      aside.open { left: 0; }
-      .overlay.open { display: block; }
-      main { padding: 15px; }
-      .post-it { width: 100%; height: auto; min-height: 100px; transform: none !important; }
+      aside { width: 100%; height: auto; flex-direction: row; justify-content: space-between; overflow-x: auto; }
+      .grid-dashboard { grid-template-columns: 1fr; }
+      .cuaderno-layout { flex-direction: column; }
+      .columna-materias, .columna-paginas { width: 100%; }
     }
   </style>
 </head>
 <body>
 
-  <!-- OSCURECEDOR DE FONDO PARA MÓVIL -->
-  <div id="overlay" class="overlay" onclick="cerrarMenuMovil()"></div>
+  <!-- MODAL INICIO / REGISTRO -->
+  <div id="modal-login" class="modal-overlay" style="display: none;">
+    <div class="notebook-card">
+      <h2>Mi Cuenta Kudex</h2>
+      <p>Guarda tus notas y pendientes sincronizados en la nube.</p>
+      
+      <form id="form-login" onsubmit="event.preventDefault(); cerrarModalLogin();">
+        <input type="email" id="email-user" name="email" autocomplete="email" class="input-onboarding" placeholder="Correo electrónico..." required>
+        <input type="password" id="pass-user" name="password" autocomplete="current-password" class="input-onboarding" placeholder="Contraseña..." required>
+        <div style="display:flex; gap:10px;">
+          <button type="submit" class="btn-principal" style="flex:1;">Iniciar Sesión</button>
+          <button type="button" class="btn-principal" style="flex:1; background:var(--bg-sidebar); border:1px solid var(--borde); color:#fff;" onclick="cerrarModalLogin()">Registrarse</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ONBOARDING INICIAL -->
+  <div id="modal-onboarding" class="modal-overlay" style="display: none;">
+    <div class="notebook-card">
+      <div id="paso-1" class="paso-onboarding">
+        <span class="subetiqueta">Paso 1 de 3</span>
+        <h2>¿De quién es esta agenda?</h2>
+        <p>Usaremos tu nombre para personalizar tu espacio de trabajo.</p>
+        <input type="text" id="nombre-usuario" class="input-onboarding" placeholder="Escribe tu nombre..." value="Santiago">
+        <button class="btn-principal" style="width:100%;" onclick="siguientePaso(2)">Continuar &rarr;</button>
+      </div>
+
+      <div id="paso-2" class="paso-onboarding" style="display: none;">
+        <span class="subetiqueta">Paso 2 de 3</span>
+        <h2>Hábitos Diarios</h2>
+        <p>Selecciona tus hábitos iniciales:</p>
+        <div class="opcion-check selected" onclick="toggleHabito(this, 'Estudiar R / Programación')">
+          <span>Estudiar R / Programación</span><span>&check;</span>
+        </div>
+        <div class="opcion-check selected" onclick="toggleHabito(this, 'Tomar 2L de agua')">
+          <span>Tomar 2L de agua</span><span>&check;</span>
+        </div>
+        <div class="opcion-check" onclick="toggleHabito(this, 'Hacer ejercicio')">
+          <span>Hacer ejercicio</span><span></span>
+        </div>
+        <button class="btn-principal" style="width:100%;" onclick="siguientePaso(3)">Continuar &rarr;</button>
+      </div>
+
+      <div id="paso-3" class="paso-onboarding" style="display: none;">
+        <span class="subetiqueta">Paso 3 de 3</span>
+        <h2>¡Todo listo!</h2>
+        <p>Tu espacio de trabajo Kudex ha sido personalizado.</p>
+        <button class="btn-principal" style="width:100%;" onclick="finalizarOnboarding()">Entrar a mi Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE EDICIÓN DE POST-IT -->
+  <div id="modal-editor-postit" class="modal-overlay" style="display: none;">
+    <div class="editor-postit-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="color:#fff;" id="titulo-modal-postit">Editar Nota / Post-it</h3>
+        <button style="background:none; border:none; color:#e06c75; font-size:1.2rem; cursor:pointer;" onclick="cerrarModalPostit()">&times;</button>
+      </div>
+      <input type="text" id="input-titulo-postit" class="input-onboarding" placeholder="Título de la nota (ej. Emprendimiento)" style="margin-bottom:0;">
+      
+      <div class="canvas-postit-container" id="postit-color-bg">
+        <textarea id="texto-area-postit" class="text-overlay-postit" placeholder="Escribe aquí tu texto con teclado..."></textarea>
+        <canvas id="canvas-dibujo-postit" class="canvas-overlay-postit disabled-drawing"></canvas>
+      </div>
+
+      <div class="bar-postit-tools">
+        <div style="display:flex; gap:6px;">
+          <button id="btn-postit-modo-texto" class="btn-modo-toggle active" onclick="setPostitModo('texto')">Modo Texto</button>
+          <button id="btn-postit-modo-dibujo" class="btn-modo-toggle" onclick="setPostitModo('dibujo')">Modo Dibujo</button>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="font-size:0.75rem; color:var(--texto-mutado);">Tinta:</span>
+          <button style="width:18px; height:18px; border-radius:50%; background:#1e222a; border:1px solid #fff; cursor:pointer;" onclick="setPostitPenColor('#1e222a')"></button>
+          <button style="width:18px; height:18px; border-radius:50%; background:#d9534f; border:1px solid #fff; cursor:pointer;" onclick="setPostitPenColor('#d9534f')"></button>
+          <button style="width:18px; height:18px; border-radius:50%; background:#0275d8; border:1px solid #fff; cursor:pointer;" onclick="setPostitPenColor('#0275d8')"></button>
+          <button class="btn-principal" style="padding:2px 6px; font-size:0.75rem; background:#e06c75;" onclick="limpiarPostitCanvas()">Borrar Trazo</button>
+        </div>
+
+        <button class="btn-principal" onclick="guardarNotaModal()">Guardar Nota</button>
+      </div>
+    </div>
+  </div>
 
   <!-- NAVEGACIÓN LATERAL -->
-  <aside id="menu-lateral">
-    <h2>Kudex</h2>
+  <aside>
+    <h1>Kudex Pro</h1>
+    <button class="btn-cuenta" onclick="abrirModalLogin()">Mi Cuenta</button>
     <nav>
-      <button class="menu-btn" onclick="cambiarVista('calendario')">📅 Mi Agenda</button>
-      <button class="menu-btn" onclick="cambiarVista('pendientes')">☑️ Pendientes</button>
-      <button class="menu-btn active" onclick="cambiarVista('tablero')">📌 Mis Notas</button>
-      <button class="menu-btn" id="btn-editor" style="display: none;" onclick="cambiarVista('editor')">✍️ Editando...</button>
+      <button class="nav-btn active" onclick="cambiarVista('daily', this)">Daily</button>
+      <button class="nav-btn" onclick="cambiarVista('planner', this)">Planner</button>
+      <button class="nav-btn" onclick="cambiarVista('lists', this)">Lists</button>
+      <button class="nav-btn" onclick="cambiarVista('notes', this)">Notes & Corcho</button>
+      <button class="nav-btn" onclick="cambiarVista('cuaderno', this)">Cuaderno</button>
     </nav>
+    <button class="nav-btn btn-reconfig" onclick="reiniciarOnboarding()">Reconfigurar</button>
   </aside>
 
-  <!-- VISTAS PRINCIPALES -->
+  <!-- CONTENEDOR DE VISTAS -->
   <main>
 
-    <!-- BOTÓN MÓVIL Y CABECERA -->
-    <div style="margin-bottom: 15px;">
-      <button class="btn-toggle-menu" onclick="abrirMenuMovil()">☰ Menú</button>
-    </div>
+    <!-- 1. DAILY DASHBOARD -->
+    <div id="vista-daily" class="vista-contenedor active">
+      <div class="grid-dashboard">
+        <div class="columna-timeline">
+          <div class="reloj-card">
+            <span class="reloj-estado">&bull; DÍA EN CURSO</span>
+            <div id="reloj-digital" class="reloj-tiempo">00:00:00</div>
+          </div>
+          <div class="clima-widget">
+            <span>20&deg;C Parcialmente nublado</span>
+            <span style="color: var(--texto-mutado);">Querétaro, MX</span>
+          </div>
+          <div class="card-workspace">
+            <h3>Línea de Tiempo</h3>
+            <div class="timeline-contenedor" id="timeline-horas"></div>
+          </div>
+        </div>
 
-    <!-- 1. VISTA CALENDARIO CONECTADO -->
-    <section id="vista-calendario" class="vista">
-      <div class="header-seccion"><h1>Mi Agenda</h1></div>
-      <div class="agenda-card">
-        <h3>Selecciona una fecha:</h3>
-        <input type="date" id="selector-fecha" onchange="filtrarPendientesPorFecha(this.value)">
-        
-        <div class="contenedor-tareas-fecha">
-          <h4>Pendientes asignados a este día:</h4>
-          <ul id="lista-pendientes-fecha" class="lista-pendientes">
-            <!-- Tareas filtradas aparecen aquí -->
-          </ul>
+        <div class="columna-workspace">
+          <div>
+            <span class="subetiqueta" id="fecha-hoy">HOY</span>
+            <h2 id="saludo-usuario">Hola, Santiago</h2>
+          </div>
+
+          <div class="card-workspace">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <h3 style="margin:0;">Notas Rápidas del Día</h3>
+              <button class="btn-principal" style="padding:4px 8px; font-size:0.75rem;" onclick="convertirNotaRapidaAPostit()">Convertir a Post-it</button>
+            </div>
+            <textarea id="nota-rapida-dia" class="area-nota-rapida" placeholder="Anota algo rápido aquí..." oninput="guardarNotaRapida(this.value)"></textarea>
+          </div>
+
+          <div class="card-workspace">
+            <h3>Sincronizar Calendario (Google / Outlook / iCal)</h3>
+            <p style="font-size:0.8rem; color:var(--texto-mutado); margin-bottom:10px;">Pega la URL de tu calendario .ics para ver tus eventos:</p>
+            <input type="text" id="input-ical-url" class="input-onboarding" placeholder="https://calendar.google.com/calendar/ical/..." style="margin-bottom:10px;">
+            <button class="btn-principal" style="width:100%; font-size:0.8rem;" onclick="importarCalendarioICS()">Sincronizar Eventos</button>
+          </div>
+
+          <div class="card-workspace">
+            <h3>Hábitos Diarios</h3>
+            <ul id="lista-habitos-dashboard" class="lista-habitos"></ul>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- 2. VISTA PENDIENTES CON FECHAS -->
-    <section id="vista-pendientes" class="vista">
-      <div class="header-seccion"><h1>Lista de Pendientes</h1></div>
+    <!-- 2. PLANNER -->
+    <div id="vista-planner" class="vista-contenedor">
+      <h2 style="color:var(--texto-destacado);">Planificador Semanal</h2>
+      <div class="grid-semana" id="grid-semana-planner"></div>
+    </div>
+
+    <!-- 3. LISTS -->
+    <div id="vista-lists" class="vista-contenedor">
+      <h2 style="color:var(--texto-destacado);">Gestor Avanzado de Pendientes</h2>
       <div class="contenedor-input-tarea">
-        <input type="text" id="input-tarea" class="input-tarea" placeholder="Escribe un nuevo pendiente..." onkeypress="manejarEnter(event)">
-        <input type="date" id="fecha-tarea" title="Fecha límite">
+        <input type="text" id="input-tarea" class="input-tarea" placeholder="Nuevo pendiente o entrega...">
+        <select id="select-prio" class="select-prioridad">
+          <option value="alta">Urgente</option>
+          <option value="media" selected>Importante</option>
+          <option value="baja">Rutina</option>
+        </select>
+        <input type="date" id="fecha-tarea" class="input-fecha">
         <button class="btn-principal" onclick="agregarTarea()">Agregar</button>
       </div>
       <ul id="lista-tareas" class="lista-pendientes"></ul>
-    </section>
+    </div>
 
-    <!-- 3. VISTA TABLERO DE NOTAS (POST-ITS) -->
-    <section id="vista-tablero" class="vista active">
-      <div class="header-seccion">
-        <h1>Tablero de Ideas</h1>
-        <button class="btn-principal" onclick="crearNuevaNota()">+ Nueva Nota</button>
+    <!-- 4. NOTES & CORCHO -->
+    <div id="vista-notes" class="vista-contenedor">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="color:var(--texto-destacado);">Tablero de Ideas</h2>
+        <button class="btn-principal" onclick="abrirModalNuevaNota()">+ Nueva Nota</button>
       </div>
       <div class="fondo-corcho">
         <div id="grid-notas" class="grid-postits"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- 4. VISTA EDITOR CON PALETA Y EXPORTACIÓN -->
-    <section id="vista-editor" class="vista">
-      <div class="header-seccion">
-        <h1 id="titulo-nota-activa">Editando Nota</h1>
-        <div>
-          <button class="btn-principal" style="background: #555;" onclick="cambiarVista('tablero')">Volver</button>
-          <button class="btn-principal" style="background: #27ae60;" onclick="exportarComoPNG()">🖼️ Exportar PNG</button>
-          <button class="btn-principal" onclick="guardarNotaActual()">💾 Guardar</button>
-        </div>
-      </div>
-      
-      <div class="editor-contenedor">
-        <div id="editor-texto" class="editor-texto" contenteditable="true" data-placeholder="Escribe tus apuntes con el teclado aquí..."></div>
+    <!-- 5. CUADERNO CON HERRAMIENTA ACTIVA RESALTADA CON BORDE ROJO/CORAL -->
+    <div id="vista-cuaderno" class="vista-contenedor">
+      <div class="cuaderno-layout">
         
-        <div class="lienzo-wrapper">
-          <div class="lienzo-barra-herramientas">
-            <!-- PALETA DE COLORES -->
-            <div class="grupo-controles">
-              <span style="font-size: 0.85rem; font-weight:600;">Color:</span>
-              <button class="btn-color active" style="background: #2b2d42;" onclick="cambiarColor('#2b2d42', this)"></button>
-              <button class="btn-color" style="background: #0066cc;" onclick="cambiarColor('#0066cc', this)"></button>
-              <button class="btn-color" style="background: #e74c3c;" onclick="cambiarColor('#e74c3c', this)"></button>
-              <button class="btn-color" style="background: rgba(255, 235, 59, 0.5);" onclick="cambiarColor('rgba(255, 235, 59, 0.5)', this, true)"></button>
+        <!-- MATERIAS / SECCIONES -->
+        <div class="columna-materias">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <strong style="color:#fff; font-size:0.85rem;">Materias</strong>
+            <button style="background:none; border:none; color:var(--acento-coral); font-weight:700; cursor:pointer;" onclick="crearMateria()">+</button>
+          </div>
+          <div id="lista-materias"></div>
+        </div>
+
+        <!-- PÁGINAS -->
+        <div class="columna-paginas">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <strong style="color:#fff; font-size:0.85rem;">Páginas</strong>
+            <button style="background:none; border:none; color:var(--acento-coral); font-weight:700; cursor:pointer;" onclick="crearPagina()">+</button>
+          </div>
+          <div id="lista-paginas"></div>
+        </div>
+
+        <!-- ÁREA DIGITAL TIPO ONENOTE PRO -->
+        <div class="area-hoja-cuaderno">
+          
+          <div class="toolbar-onenote-pro">
+            <div class="toolbar-row">
+              <div class="tool-group">
+                <button id="btn-cuaderno-modo-texto" class="btn-tool-pro tool-active" onclick="setCuadernoModo('texto')">Modo Texto</button>
+                <button id="btn-cuaderno-modo-dibujo" class="btn-tool-pro" onclick="setCuadernoModo('dibujo')">Modo Dibujo</button>
+              </div>
+
+              <div class="tool-group">
+                <button class="btn-tool-pro" onclick="formatDoc('bold')"><b>N</b></button>
+                <button class="btn-tool-pro" onclick="formatDoc('italic')"><i>K</i></button>
+                <button class="btn-tool-pro" onclick="formatDoc('underline')"><u>S</u></button>
+              </div>
+
+              <div class="tool-group">
+                <button class="btn-tool-pro" onclick="aplicarEstiloTitulo('h1')">Título 1</button>
+                <button class="btn-tool-pro" onclick="aplicarEstiloTitulo('h2')">Título 2</button>
+              </div>
+
+              <div class="tool-group">
+                <span>Fondo:</span>
+                <button class="btn-tool-pro" onclick="setNotebookPattern('grid')">Cuadrícula</button>
+                <button class="btn-tool-pro" onclick="setNotebookPattern('lines')">Rayas</button>
+                <button class="btn-tool-pro" onclick="setNotebookPattern('blank')">Liso</button>
+              </div>
             </div>
 
-            <!-- GROSOR DEL TRAZO -->
-            <div class="grupo-controles">
-              <span style="font-size: 0.85rem; font-weight:600;">Grosor:</span>
-              <button class="btn-grosor active" onclick="cambiarGrosor(2, this)">Fino</button>
-              <button class="btn-grosor" onclick="cambiarGrosor(5, this)">Medio</button>
-              <button class="btn-grosor" onclick="cambiarGrosor(12, this)">Grueso</button>
-            </div>
+            <!-- FILA 2: HERRAMIENTAS DE DIBUJO CON MARCADOR DE ACTIVIDAD -->
+            <div class="toolbar-row" style="background:#1e222a;">
+              <div class="tool-group">
+                <button id="tool-pen" class="btn-tool-pro tool-active" onclick="setHerramientaTrazo('pen')">Lápiz</button>
+                <button id="tool-marker" class="btn-tool-pro" onclick="setHerramientaTrazo('marker')">Marcador</button>
+                <button id="tool-highlighter" class="btn-tool-pro" onclick="setHerramientaTrazo('highlighter')">Resaltador</button>
+                <button id="tool-eraser" class="btn-tool-pro" onclick="setHerramientaTrazo('eraser')">Borrador</button>
+              </div>
 
-            <button class="btn-principal" style="background: #e74c3c; padding: 5px 10px; font-size: 0.8rem;" onclick="limpiarLienzo()">🗑️ Limpiar</button>
+              <div class="tool-group">
+                <span>Grosor:</span>
+                <button id="grosor-1" class="btn-tool-pro tool-active" onclick="setNotebookGrosor(1, this)">0.25 mm</button>
+                <button id="grosor-3" class="btn-tool-pro" onclick="setNotebookGrosor(3, this)">0.5 mm</button>
+                <button id="grosor-6" class="btn-tool-pro" onclick="setNotebookGrosor(6, this)">0.7 mm</button>
+                <button id="grosor-10" class="btn-tool-pro" onclick="setNotebookGrosor(10, this)">1 mm</button>
+              </div>
+
+              <div class="tool-group">
+                <span>Tinta:</span>
+                <button style="width:16px; height:16px; border-radius:50%; background:#ffffff; border:1px solid #000; cursor:pointer;" onclick="setNotebookPenColor('#ffffff')"></button>
+                <button style="width:16px; height:16px; border-radius:50%; background:#ff7a7a; border:1px solid #fff; cursor:pointer;" onclick="setNotebookPenColor('#ff7a7a')"></button>
+                <button style="width:16px; height:16px; border-radius:50%; background:#61afef; border:1px solid #fff; cursor:pointer;" onclick="setNotebookPenColor('#61afef')"></button>
+                <button style="width:16px; height:16px; border-radius:50%; background:#98c379; border:1px solid #fff; cursor:pointer;" onclick="setNotebookPenColor('#98c379')"></button>
+              </div>
+
+              <button class="btn-tool-pro" style="margin-left:auto; background:var(--acento-verde); color:#1e222a; font-weight:700;" onclick="exportarCuadernoPNG()">Exportar Nota</button>
+            </div>
           </div>
 
-          <canvas id="pizarra"></canvas>
+          <div class="contenedor-scroll-cuaderno">
+            <div id="hoja-digital" class="hoja-cuaderno bg-grid">
+              <textarea id="texto-cuaderno-hoja" class="text-editor-cuaderno" placeholder="Escribe aquí tus apuntes con teclado..."></textarea>
+              <canvas id="canvas-cuaderno" class="canvas-cuaderno disabled-drawing"></canvas>
+            </div>
+          </div>
         </div>
+
       </div>
-    </section>
+    </div>
 
   </main>
 
   <script>
-    // --- 1. MENÚ RESPONSIVO MÓVIL ---
-    function abrirMenuMovil() {
-      document.getElementById('menu-lateral').classList.add('open');
-      document.getElementById('overlay').classList.add('open');
-    }
-    function cerrarMenuMovil() {
-      document.getElementById('menu-lateral').classList.remove('open');
-      document.getElementById('overlay').classList.remove('open');
-    }
-
-    // --- 2. NAVEGACIÓN ENTRE VISTAS ---
-    function cambiarVista(id) {
-      cerrarMenuMovil();
-      document.querySelectorAll('.vista').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.menu-btn').forEach(b => {
-        if(b.id !== 'btn-editor') b.classList.remove('active');
-      });
-      
-      document.getElementById(`vista-${id}`).classList.add('active');
-      const btnEditor = document.getElementById('btn-editor');
-      
-      if(id === 'editor') {
-        btnEditor.style.display = 'block';
-        btnEditor.classList.add('active');
-        setTimeout(ajustarCanvas, 50);
-      } else {
-        btnEditor.style.display = 'none';
-        btnEditor.classList.remove('active');
-      }
-
-      if(id === 'calendario') {
-        // Cargar fecha de hoy por defecto
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('selector-fecha').value = hoy;
-        filtrarPendientesPorFecha(hoy);
-      }
-    }
-
-    // --- 3. PENDIENTES Y CONEXIÓN CON CALENDARIO ---
+    let configPerfil = JSON.parse(localStorage.getItem('kudex_perfil')) || null;
+    let habitosSeleccionados = ['Estudiar R / Programación', 'Tomar 2L de agua'];
     let tareas = JSON.parse(localStorage.getItem('kudex_tareas')) || [];
+    let notas = JSON.parse(localStorage.getItem('kudex_notas_multiples')) || [
+      { id: 1, titulo: 'Emprendimiento', texto: 'Parte del Visón HUB', colorClase: 2 }
+    ];
 
+    let materias = JSON.parse(localStorage.getItem('kudex_materias')) || [
+      { 
+        id: 1, 
+        nombre: 'Estática', 
+        paginas: [
+          { id: 'p1_1', nombre: 'Ejercicios 2D', texto: '', fondo: 'grid', trazoData: null },
+          { id: 'p1_2', nombre: 'Momento de fuerza', texto: '', fondo: 'lines', trazoData: null }
+        ] 
+      },
+      { 
+        id: 2, 
+        nombre: 'Probabilidad', 
+        paginas: [
+          { id: 'p2_1', nombre: 'Distribución Binomial', texto: '', fondo: 'grid', trazoData: null }
+        ] 
+      }
+    ];
+
+    let materiaActiva = 0;
+    let paginaActiva = 0;
+    let notaEditandoId = null;
+    let historialTrazosCuaderno = [];
+
+    // RELOJ
+    function actualizarReloj() {
+      const ahora = new Date();
+      document.getElementById('reloj-digital').innerText = ahora.toTimeString().split(' ')[0];
+    }
+    setInterval(actualizarReloj, 1000);
+
+    // TIMELINE
+    function generarTimeline() {
+      const contenedor = document.getElementById('timeline-horas');
+      contenedor.innerHTML = '';
+      for (let i = 8; i <= 20; i++) {
+        const horaStr = `${i < 10 ? '0' + i : i}:00`;
+        contenedor.innerHTML += `
+          <div class="hora-bloque">
+            <span class="hora-label">${horaStr}</span>
+            <div class="hora-linea">
+              ${i === 10 ? '<div class="evento-item">Clase de Probabilidad y Estadística</div>' : ''}
+              ${i === 16 ? '<div class="evento-item" style="border-color:var(--acento-amarillo); background:rgba(229,192,123,0.15);">Sesión de Programación R</div>' : ''}
+            </div>
+          </div>`;
+      }
+    }
+
+    // CAMBIO VISTAS
+    function cambiarVista(idVista, btn) {
+      document.querySelectorAll('.vista-contenedor').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`vista-${idVista}`).classList.add('active');
+      if(btn) btn.classList.add('active');
+      if(idVista === 'cuaderno') {
+        renderizarCuadernoEstructura();
+        setTimeout(initCanvasCuaderno, 50);
+      }
+    }
+
+    // LOGIN MODAL
+    function abrirModalLogin() { document.getElementById('modal-login').style.display = 'flex'; }
+    function cerrarModalLogin() { document.getElementById('modal-login').style.display = 'none'; }
+
+    // NOTAS Y CORCHO
+    function renderizarTablero() {
+      const grid = document.getElementById('grid-notas');
+      grid.innerHTML = '';
+      notas.forEach(nota => {
+        const div = document.createElement('div');
+        div.className = `post-it color-${nota.colorClase}`;
+        div.onclick = () => abrirModalEditarNota(nota.id);
+        div.innerHTML = `
+          <h4>${nota.titulo || 'Sin título'}</h4>
+          <p>${nota.texto || ''}</p>
+          <span style="font-size:0.65rem; opacity:0.6; align-self:flex-end;">Clic para abrir</span>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function convertirNotaRapidaAPostit() {
+      const texto = document.getElementById('nota-rapida-dia').value.trim();
+      if(!texto) return alert('Escribe algo en la nota rápida primero.');
+      notas.push({ id: Date.now(), titulo: 'Nota Diaria', texto: texto, colorClase: Math.floor(Math.random()*4)+1 });
+      localStorage.setItem('kudex_notas_multiples', JSON.stringify(notas));
+      renderizarTablero();
+      alert('Nota convertida y enviada al tablero de corcho.');
+    }
+
+    function abrirModalNuevaNota() {
+      notaEditandoId = Date.now();
+      document.getElementById('input-titulo-postit').value = '';
+      document.getElementById('texto-area-postit').value = '';
+      document.getElementById('postit-color-bg').className = `canvas-postit-container color-${Math.floor(Math.random()*4)+1}`;
+      limpiarPostitCanvas();
+      setPostitModo('texto');
+      document.getElementById('modal-editor-postit').style.display = 'flex';
+      setTimeout(initPostitCanvas, 50);
+    }
+
+    function abrirModalEditarNota(id) {
+      const nota = notas.find(n => n.id === id);
+      if(!nota) return;
+      notaEditandoId = id;
+      document.getElementById('input-titulo-postit').value = nota.titulo;
+      document.getElementById('texto-area-postit').value = nota.texto;
+      document.getElementById('postit-color-bg').className = `canvas-postit-container color-${nota.colorClase || 1}`;
+      setPostitModo('texto');
+      document.getElementById('modal-editor-postit').style.display = 'flex';
+      setTimeout(initPostitCanvas, 50);
+    }
+
+    function cerrarModalPostit() { document.getElementById('modal-editor-postit').style.display = 'none'; }
+
+    function guardarNotaModal() {
+      const titulo = document.getElementById('input-titulo-postit').value.trim() || 'Nota sin título';
+      const texto = document.getElementById('texto-area-postit').value;
+      const indice = notas.findIndex(n => n.id === notaEditandoId);
+      
+      if(indice >= 0) {
+        notas[indice].titulo = titulo;
+        notas[indice].texto = texto;
+      } else {
+        notas.push({ id: notaEditandoId, titulo, texto, colorClase: Math.floor(Math.random()*4)+1 });
+      }
+
+      localStorage.setItem('kudex_notas_multiples', JSON.stringify(notas));
+      renderizarTablero();
+      cerrarModalPostit();
+    }
+
+    // CONMUTADOR MODO TEXTO / DIBUJO EN POST-IT
+    function setPostitModo(modo) {
+      const canvas = document.getElementById('canvas-dibujo-postit');
+      const btnTexto = document.getElementById('btn-postit-modo-texto');
+      const btnDibujo = document.getElementById('btn-postit-modo-dibujo');
+      
+      if(modo === 'dibujo') {
+        canvas.classList.remove('disabled-drawing');
+        btnDibujo.classList.add('active');
+        btnTexto.classList.remove('active');
+      } else {
+        canvas.classList.add('disabled-drawing');
+        btnTexto.classList.add('active');
+        btnDibujo.classList.remove('active');
+      }
+    }
+
+    // CANVAS POST-IT MODAL
+    const canvasPostit = document.getElementById('canvas-dibujo-postit');
+    const ctxPostit = canvasPostit.getContext('2d');
+    let dibujandoPostit = false;
+
+    function initPostitCanvas() {
+      canvasPostit.width = canvasPostit.offsetWidth;
+      canvasPostit.height = canvasPostit.offsetHeight;
+      ctxPostit.lineCap = 'round'; ctxPostit.lineWidth = 3; ctxPostit.strokeStyle = '#1e222a';
+    }
+    function setPostitPenColor(color) { ctxPostit.strokeStyle = color; }
+    function limpiarPostitCanvas() { ctxPostit.clearRect(0, 0, canvasPostit.width, canvasPostit.height); }
+
+    canvasPostit.addEventListener('mousedown', (e) => { dibujandoPostit = true; ctxPostit.beginPath(); ctxPostit.moveTo(e.offsetX, e.offsetY); });
+    canvasPostit.addEventListener('mousemove', (e) => { if(dibujandoPostit) { ctxPostit.lineTo(e.offsetX, e.offsetY); ctxPostit.stroke(); } });
+    canvasPostit.addEventListener('mouseup', () => dibujandoPostit = false);
+
+    // CUADERNO MULTIPÁGINA PRO
+    function renderizarCuadernoEstructura() {
+      const containerMat = document.getElementById('lista-materias');
+      containerMat.innerHTML = '';
+      materias.forEach((m, idx) => {
+        containerMat.innerHTML += `<div class="item-materia ${idx === materiaActiva ? 'active' : ''}" onclick="seleccionarMateria(${idx})">${m.nombre}</div>`;
+      });
+
+      const containerPag = document.getElementById('lista-paginas');
+      containerPag.innerHTML = '';
+      if(materias[materiaActiva] && materias[materiaActiva].paginas) {
+        materias[materiaActiva].paginas.forEach((p, idx) => {
+          containerPag.innerHTML += `<div class="item-pagina ${idx === paginaActiva ? 'active' : ''}" onclick="seleccionarPagina(${idx})">${p.nombre}</div>`;
+        });
+      }
+    }
+
+    function guardarEstadoHojaActual() {
+      if (!materias[materiaActiva] || !materias[materiaActiva].paginas[paginaActiva]) return;
+      const pag = materias[materiaActiva].paginas[paginaActiva];
+      pag.texto = document.getElementById('texto-cuaderno-hoja').value;
+      pag.trazoData = canvasCuaderno.toDataURL();
+      localStorage.setItem('kudex_materias', JSON.stringify(materias));
+    }
+
+    function cargarHojaActual() {
+      if (!materias[materiaActiva] || !materias[materiaActiva].paginas[paginaActiva]) return;
+      const pag = materias[materiaActiva].paginas[paginaActiva];
+      
+      document.getElementById('texto-cuaderno-hoja').value = pag.texto || '';
+      setNotebookPattern(pag.fondo || 'grid');
+      
+      ctxCuaderno.clearRect(0, 0, canvasCuaderno.width, canvasCuaderno.height);
+      historialTrazosCuaderno = [];
+      if (pag.trazoData) {
+        const img = new Image();
+        img.onload = () => {
+          ctxCuaderno.drawImage(img, 0, 0);
+          historialTrazosCuaderno.push(canvasCuaderno.toDataURL());
+        };
+        img.src = pag.trazoData;
+      }
+    }
+
+    function seleccionarMateria(i) {
+      guardarEstadoHojaActual();
+      materiaActiva = i; paginaActiva = 0;
+      renderizarCuadernoEstructura();
+      cargarHojaActual();
+    }
+
+    function seleccionarPagina(i) {
+      guardarEstadoHojaActual();
+      paginaActiva = i;
+      renderizarCuadernoEstructura();
+      cargarHojaActual();
+    }
+
+    function crearMateria() {
+      const nombre = prompt("Nombre de la nueva Materia:");
+      if(!nombre) return;
+      guardarEstadoHojaActual();
+      materias.push({ id: Date.now(), nombre, paginas: [{ id: `p_${Date.now()}`, nombre: 'Página 1', texto: '', fondo: 'grid', trazoData: null }] });
+      materiaActiva = materias.length - 1; paginaActiva = 0;
+      localStorage.setItem('kudex_materias', JSON.stringify(materias));
+      renderizarCuadernoEstructura();
+      cargarHojaActual();
+    }
+
+    function crearPagina() {
+      const nombre = prompt("Nombre de la página:");
+      if(!nombre || !materias[materiaActiva]) return;
+      guardarEstadoHojaActual();
+      materias[materiaActiva].paginas.push({ id: `p_${Date.now()}`, nombre, texto: '', fondo: 'grid', trazoData: null });
+      paginaActiva = materias[materiaActiva].paginas.length - 1;
+      localStorage.setItem('kudex_materias', JSON.stringify(materias));
+      renderizarCuadernoEstructura();
+      cargarHojaActual();
+    }
+
+    // CONMUTADOR MODO TEXTO / DIBUJO EN CUADERNO
+    function setCuadernoModo(modo) {
+      const canvas = document.getElementById('canvas-cuaderno');
+      const btnTexto = document.getElementById('btn-cuaderno-modo-texto');
+      const btnDibujo = document.getElementById('btn-cuaderno-modo-dibujo');
+
+      if(modo === 'dibujo') {
+        canvas.classList.remove('disabled-drawing');
+        btnDibujo.classList.add('tool-active');
+        btnTexto.classList.remove('tool-active');
+      } else {
+        canvas.classList.add('disabled-drawing');
+        btnTexto.classList.add('tool-active');
+        btnDibujo.classList.remove('tool-active');
+      }
+    }
+
+    // CANVAS CUADERNO HOJA INFINITA CON BORRADOR INTELIGENTE Y BORDES DESTACADOS
+    const canvasCuaderno = document.getElementById('canvas-cuaderno');
+    const ctxCuaderno = canvasCuaderno.getContext('2d');
+    let dibujandoCuaderno = false;
+
+    function initCanvasCuaderno() {
+      const hoja = document.getElementById('hoja-digital');
+      canvasCuaderno.width = hoja.offsetWidth;
+      canvasCuaderno.height = hoja.offsetHeight;
+      ctxCuaderno.lineCap = 'round'; ctxCuaderno.lineWidth = 3; ctxCuaderno.strokeStyle = '#ff7a7a';
+      cargarHojaActual();
+    }
+
+    function setNotebookPattern(p) {
+      document.getElementById('hoja-digital').className = `hoja-cuaderno bg-${p}`;
+      if(materias[materiaActiva] && materias[materiaActiva].paginas[paginaActiva]) {
+        materias[materiaActiva].paginas[paginaActiva].fondo = p;
+        localStorage.setItem('kudex_materias', JSON.stringify(materias));
+      }
+    }
+
+    // CONFIGURACIÓN DE TINTA, RESALTADOR Y BORRADOR INTELIGENTE
+    function setHerramientaTrazo(tipo) {
+      document.querySelectorAll('#tool-pen, #tool-marker, #tool-highlighter, #tool-eraser').forEach(el => el.classList.remove('tool-active'));
+      document.getElementById(`tool-${tipo}`).classList.add('tool-active');
+
+      if(tipo === 'pen') {
+        ctxCuaderno.globalCompositeOperation = 'source-over';
+        ctxCuaderno.strokeStyle = '#ff7a7a';
+        ctxCuaderno.lineWidth = 3;
+        ctxCuaderno.globalAlpha = 1;
+      } else if(tipo === 'marker') {
+        ctxCuaderno.globalCompositeOperation = 'source-over';
+        ctxCuaderno.strokeStyle = 'rgba(97, 175, 239, 0.7)';
+        ctxCuaderno.lineWidth = 8;
+        ctxCuaderno.globalAlpha = 0.7;
+      } else if(tipo === 'highlighter') {
+        ctxCuaderno.globalCompositeOperation = 'source-over';
+        ctxCuaderno.strokeStyle = 'rgba(229, 192, 123, 0.4)';
+        ctxCuaderno.lineWidth = 16;
+        ctxCuaderno.globalAlpha = 0.4;
+      } else if(tipo === 'eraser') {
+        // CORRECCIÓN CRÍTICA: destination-out BORRA LA TINTA SIN AFECTAR CUADRÍCULA O TEXTO
+        ctxCuaderno.globalCompositeOperation = 'destination-out';
+        ctxCuaderno.lineWidth = 24;
+        ctxCuaderno.globalAlpha = 1;
+      }
+    }
+
+    function setNotebookGrosor(g, btn) {
+      ctxCuaderno.lineWidth = g;
+      document.querySelectorAll('#grosor-1, #grosor-3, #grosor-6, #grosor-10').forEach(el => el.classList.remove('tool-active'));
+      if(btn) btn.classList.add('tool-active');
+    }
+
+    function setNotebookPenColor(c) {
+      ctxCuaderno.globalCompositeOperation = 'source-over';
+      ctxCuaderno.strokeStyle = c;
+      ctxCuaderno.globalAlpha = 1;
+    }
+
+    canvasCuaderno.addEventListener('mousedown', (e) => {
+      dibujandoCuaderno = true;
+      ctxCuaderno.beginPath();
+      ctxCuaderno.moveTo(e.offsetX, e.offsetY);
+    });
+
+    canvasCuaderno.addEventListener('mousemove', (e) => {
+      if(dibujandoCuaderno) { ctxCuaderno.lineTo(e.offsetX, e.offsetY); ctxCuaderno.stroke(); }
+    });
+
+    canvasCuaderno.addEventListener('mouseup', () => {
+      dibujandoCuaderno = false;
+      historialTrazosCuaderno.push(canvasCuaderno.toDataURL());
+      guardarEstadoHojaActual();
+    });
+
+    // ATATACO DE TECLADO: CONTROL + Z / COMMAND + Z
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (historialTrazosCuaderno.length > 0) {
+          historialTrazosCuaderno.pop();
+          ctxCuaderno.clearRect(0, 0, canvasCuaderno.width, canvasCuaderno.height);
+          if (historialTrazosCuaderno.length > 0) {
+            const img = new Image();
+            img.onload = () => ctxCuaderno.drawImage(img, 0, 0);
+            img.src = historialTrazosCuaderno[historialTrazosCuaderno.length - 1];
+          }
+          guardarEstadoHojaActual();
+        }
+      }
+    });
+
+    function exportarCuadernoPNG() {
+      const enlace = document.createElement('a');
+      enlace.download = `apunte-kudex.png`;
+      enlace.href = canvasCuaderno.toDataURL('image/png');
+      enlace.click();
+    }
+
+    // FORMATO DE TEXTO
+    function formatDoc(cmd) { document.execCommand(cmd, false, null); }
+    function aplicarEstiloTitulo(tag) {
+      const textEditor = document.getElementById('texto-cuaderno-hoja');
+      textEditor.value += `\n--- ${tag.toUpperCase()} ---\n`;
+    }
+
+    // IMPORTAR ICAL
+    function importarCalendarioICS() {
+      const url = document.getElementById('input-ical-url').value.trim();
+      if (!url) return alert('Por favor ingresa una URL .ics válida');
+      localStorage.setItem('kudex_ical_url', url);
+      alert('Calendario guardado y sincronizado correctamente.');
+    }
+
+    // PENDIENTES
     function renderizarTareas() {
       const lista = document.getElementById('lista-tareas');
       lista.innerHTML = '';
       tareas.forEach((tarea, index) => {
         const li = document.createElement('li');
         li.className = `item-pendiente ${tarea.completada ? 'completada' : ''}`;
-        const fechaHtml = tarea.fecha ? `<span class="fecha-etiqueta">📅 ${tarea.fecha}</span>` : '';
         li.innerHTML = `
           <input type="checkbox" ${tarea.completada ? 'checked' : ''} onchange="alternarTarea(${index})">
           <span>${tarea.texto}</span>
-          ${fechaHtml}
-          <button class="btn-eliminar" onclick="eliminarTarea(${index})">X</button>
+          <span class="tag-prioridad prio-${tarea.prioridad}">${tarea.prioridad}</span>
+          ${tarea.fecha ? `<span class="fecha-etiqueta">${tarea.fecha}</span>` : ''}
+          <button style="background:none; border:none; color:#e06c75; cursor:pointer;" onclick="eliminarTarea(${index})">&times;</button>
         `;
         lista.appendChild(li);
       });
@@ -262,181 +895,90 @@
     function agregarTarea() {
       const input = document.getElementById('input-tarea');
       const inputFecha = document.getElementById('fecha-tarea');
-      if (input.value.trim() === '') return;
-      
-      tareas.push({ texto: input.value.trim(), fecha: inputFecha.value, completada: false });
-      input.value = '';
-      inputFecha.value = '';
+      const selectPrio = document.getElementById('select-prio');
+      if (!input.value.trim()) return;
+      tareas.push({ texto: input.value.trim(), prioridad: selectPrio.value, fecha: inputFecha.value, completada: false });
+      input.value = ''; inputFecha.value = '';
       renderizarTareas();
     }
+    function alternarTarea(i) { tareas[i].completada = !tareas[i].completada; renderizarTareas(); }
+    function eliminarTarea(i) { tareas.splice(i, 1); renderizarTareas(); }
 
-    function manejarEnter(e) { if (e.key === 'Enter') agregarTarea(); }
-    function alternarTarea(index) { tareas[index].completada = !tareas[index].completada; renderizarTareas(); }
-    function eliminarTarea(index) { tareas.splice(index, 1); renderizarTareas(); }
-
-    function filtrarPendientesPorFecha(fechaSeleccionada) {
-      const lista = document.getElementById('lista-pendientes-fecha');
-      lista.innerHTML = '';
-      const filtradas = tareas.filter(t => t.fecha === fechaSeleccionada);
-
-      if (filtradas.length === 0) {
-        lista.innerHTML = '<li style="color:#888; font-size:0.9rem;">No hay tareas para esta fecha.</li>';
-        return;
-      }
-
-      filtradas.forEach(tarea => {
-        const li = document.createElement('li');
-        li.className = `item-pendiente ${tarea.completada ? 'completada' : ''}`;
-        li.innerHTML = `<span>${tarea.completada ? '✅' : '📌'} ${tarea.texto}</span>`;
-        lista.appendChild(li);
-      });
-    }
-
-    // --- 4. TABLERO DE NOTAS MULTIPLES ---
-    let notas = JSON.parse(localStorage.getItem('kudex_notas_multiples')) || [];
-    let idNotaActiva = null;
-
-    function renderizarTablero() {
-      const grid = document.getElementById('grid-notas');
+    // PLANNER
+    function renderizarPlannerSemanal() {
+      const grid = document.getElementById('grid-semana-planner');
+      const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
       grid.innerHTML = '';
-      notas.forEach(nota => {
-        const div = document.createElement('div');
-        div.className = `post-it color-${nota.colorClase}`;
-        div.onclick = () => abrirNota(nota.id);
-        const textoLimpio = nota.texto.replace(/<[^>]*>?/gm, '').substring(0, 40);
-        div.innerHTML = `<h3>${nota.titulo}</h3><p>${textoLimpio || 'Sin texto...'}</p>`;
-        grid.appendChild(div);
+      dias.forEach(dia => {
+        grid.innerHTML += `<div class="dia-card"><h4>${dia}</h4><div style="font-size:0.8rem; color:var(--texto-mutado);">Sin entregas asignadas</div></div>`;
       });
     }
 
-    function crearNuevaNota() {
-      const titulo = prompt("Título de la nueva nota:");
-      if (!titulo) return;
-      const nuevaNota = {
-        id: Date.now(),
-        titulo: titulo,
-        texto: '',
-        dibujo: null,
-        colorClase: Math.floor(Math.random() * 4) + 1
-      };
-      notas.push(nuevaNota);
-      guardarDatosGlobales();
+    // ONBOARDING
+    function verificarOnboarding() {
+      if (!configPerfil) {
+        document.getElementById('modal-onboarding').style.display = 'flex';
+      } else {
+        document.getElementById('modal-onboarding').style.display = 'none';
+        cargarDashboard();
+      }
+    }
+    function siguientePaso(p) {
+      document.querySelectorAll('.paso-onboarding').forEach(el => el.style.display = 'none');
+      document.getElementById(`paso-${p}`).style.display = 'block';
+    }
+    function toggleHabito(el, h) {
+      el.classList.toggle('selected');
+      if (el.classList.contains('selected')) {
+        el.querySelector('span:last-child').innerText = '✓';
+        if(!habitosSeleccionados.includes(h)) habitosSeleccionados.push(h);
+      } else {
+        el.querySelector('span:last-child').innerText = '';
+        habitosSeleccionados = habitosSeleccionados.filter(item => item !== h);
+      }
+    }
+    function finalizarOnboarding() {
+      const nombre = document.getElementById('nombre-usuario').value.trim() || 'Santiago';
+      configPerfil = { nombre, habitos: habitosSeleccionados };
+      localStorage.setItem('kudex_perfil', JSON.stringify(configPerfil));
+      document.getElementById('modal-onboarding').style.display = 'none';
+      cargarDashboard();
+    }
+    function reiniciarOnboarding() {
+      localStorage.removeItem('kudex_perfil');
+      configPerfil = null;
+      siguientePaso(1);
+      document.getElementById('modal-onboarding').style.display = 'flex';
+    }
+
+    function cargarDashboard() {
+      if (!configPerfil) return;
+      document.getElementById('saludo-usuario').innerText = `Hola, ${configPerfil.nombre}`;
+      const hoy = new Date();
+      document.getElementById('fecha-hoy').innerText = hoy.toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+      
+      const ulHabitos = document.getElementById('lista-habitos-dashboard');
+      ulHabitos.innerHTML = '';
+      configPerfil.habitos.forEach((h, index) => {
+        ulHabitos.innerHTML += `<li class="item-habito"><input type="checkbox" id="hab-${index}"><label for="hab-${index}">${h}</label></li>`;
+      });
+
+      document.getElementById('nota-rapida-dia').value = localStorage.getItem('kudex_nota_rapida_dia') || '';
+      if(localStorage.getItem('kudex_ical_url')) {
+        document.getElementById('input-ical-url').value = localStorage.getItem('kudex_ical_url');
+      }
+    }
+
+    function guardarNotaRapida(t) { localStorage.setItem('kudex_nota_rapida_dia', t); }
+
+    window.onload = () => {
+      verificarOnboarding();
+      actualizarReloj();
+      generarTimeline();
+      renderizarTareas();
       renderizarTablero();
-      abrirNota(nuevaNota.id);
-    }
-
-    function abrirNota(id) {
-      idNotaActiva = id;
-      const nota = notas.find(n => n.id === id);
-      document.getElementById('titulo-nota-activa').innerText = nota.titulo;
-      document.getElementById('editor-texto').innerHTML = nota.texto;
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (nota.dibujo) {
-        let img = new Image();
-        img.src = nota.dibujo;
-        img.onload = () => ctx.drawImage(img, 0, 0);
-      }
-      cambiarVista('editor');
-    }
-
-    function guardarNotaActual() {
-      if (!idNotaActiva) return;
-      const index = notas.findIndex(n => n.id === idNotaActiva);
-      if (index !== -1) {
-        notas[index].texto = document.getElementById('editor-texto').innerHTML;
-        notas[index].dibujo = canvas.toDataURL();
-        guardarDatosGlobales();
-        alert('Nota guardada con éxito.');
-        renderizarTablero();
-      }
-    }
-
-    function guardarDatosGlobales() {
-      localStorage.setItem('kudex_notas_multiples', JSON.stringify(notas));
-    }
-
-    // --- 5. EXPORTAR NOTA COMO IMAGEN ---
-    function exportarComoPNG() {
-      if (!idNotaActiva) return;
-      const nota = notas.find(n => n.id === idNotaActiva);
-      
-      // Crear enlace de descarga con la imagen del lienzo
-      const enlace = document.createElement('a');
-      enlace.download = `${nota ? nota.titulo : 'nota-kudex'}.png`;
-      enlace.href = canvas.toDataURL('image/png');
-      enlace.click();
-    }
-
-    // --- 6. MOTOR DE TRAZO Y HERRAMIENTAS ---
-    const canvas = document.getElementById('pizarra');
-    const ctx = canvas.getContext('2d');
-    let dibujando = false;
-
-    // Ajustes por defecto de tinta
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#2b2d42';
-
-    function cambiarColor(color, elemento, esResaltador = false) {
-      document.querySelectorAll('.btn-color').forEach(b => b.classList.remove('active'));
-      elemento.classList.add('active');
-      ctx.strokeStyle = color;
-      if (esResaltador) {
-        ctx.lineWidth = 15;
-      }
-    }
-
-    function cambiarGrosor(grosor, elemento) {
-      document.querySelectorAll('.btn-grosor').forEach(b => b.classList.remove('active'));
-      elemento.classList.add('active');
-      ctx.lineWidth = grosor;
-    }
-
-    function ajustarCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      if(rect.width > 0) {
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        ctx.lineCap = 'round';
-        if(idNotaActiva) {
-          const nota = notas.find(n => n.id === idNotaActiva);
-          if (nota && nota.dibujo) {
-            let img = new Image();
-            img.src = nota.dibujo;
-            img.onload = () => ctx.drawImage(img, 0, 0);
-          }
-        }
-      }
-    }
-
-    window.onload = () => { renderizarTareas(); renderizarTablero(); };
-    window.onresize = ajustarCanvas;
-
-    // Eventos táctiles y ratón
-    canvas.addEventListener('mousedown', (e) => iniciarTrazo(e.offsetX, e.offsetY));
-    canvas.addEventListener('mousemove', (e) => { if(dibujando) trazar(e.offsetX, e.offsetY); });
-    canvas.addEventListener('mouseup', detenerTrazo);
-    canvas.addEventListener('mouseout', detenerTrazo);
-
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      iniciarTrazo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-    });
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if(dibujando) {
-        const rect = canvas.getBoundingClientRect();
-        trazar(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-      }
-    });
-    canvas.addEventListener('touchend', detenerTrazo);
-
-    function iniciarTrazo(x, y) { dibujando = true; ctx.beginPath(); ctx.moveTo(x, y); }
-    function trazar(x, y) { ctx.lineTo(x, y); ctx.stroke(); }
-    function detenerTrazo() { dibujando = false; ctx.closePath(); }
-    function limpiarLienzo() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+      renderizarPlannerSemanal();
+    };
   </script>
 </body>
 </html>
